@@ -565,46 +565,70 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 
+    
     /* =====================================================
        14. CONTACT FORM
     ===================================================== */
 
     const contactForm =
-        document.querySelector(
-            ".contact-form"
-        );
+        document.querySelector(".contact-form");
 
 
-    contactForm?.addEventListener(
-        "submit",
-        event => {
+    contactForm?.addEventListener("submit", async event => {
 
-            event.preventDefault();
+        event.preventDefault();
 
 
-            const button =
-                contactForm.querySelector(
-                    "button[type='submit']"
+        const button =
+            contactForm.querySelector(
+                "button[type='submit']"
+            );
+
+
+        if (!button) return;
+
+
+        const originalHTML =
+            button.innerHTML;
+
+
+        /* Show loading state */
+
+        button.disabled = true;
+
+        button.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+
+
+        try {
+
+            const formData =
+                new FormData(contactForm);
+
+
+            const response =
+                await fetch(
+                    "https://api.web3forms.com/submit",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
                 );
 
 
-            if (!button) return;
+            const data =
+                await response.json();
 
 
-            const originalHTML =
-                button.innerHTML;
+            if (data.success) {
 
-
-            button.disabled = true;
-
-            button.innerHTML =
-                '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
-
-
-            setTimeout(() => {
+                /* Success */
 
                 button.innerHTML =
                     '<i class="fa-solid fa-check"></i> Message Sent';
+
+
+                contactForm.reset();
 
 
                 setTimeout(() => {
@@ -614,14 +638,55 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     button.disabled = false;
 
-                    contactForm.reset();
+                }, 2500);
 
-                }, 2000);
 
-            }, 1200);
+            } else {
+
+                /* Web3Forms returned an error */
+
+                button.innerHTML =
+                    '<i class="fa-solid fa-xmark"></i> Failed to Send';
+
+
+                setTimeout(() => {
+
+                    button.innerHTML =
+                        originalHTML;
+
+                    button.disabled = false;
+
+                }, 2500);
+
+            }
+
+
+        } catch (error) {
+
+            /* Network error */
+
+            console.error(
+                "Contact form error:",
+                error
+            );
+
+
+            button.innerHTML =
+                '<i class="fa-solid fa-wifi"></i> Network Error';
+
+
+            setTimeout(() => {
+
+                button.innerHTML =
+                    originalHTML;
+
+                button.disabled = false;
+
+            }, 2500);
 
         }
-    );
+
+    });
 
 
     /* =====================================================
@@ -710,24 +775,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
-const contactForm = document.getElementById("contactForm");
-
-contactForm.addEventListener("submit", function (e) {
-    e.preventDefault();
-
-    const name = document.getElementById("name").value;
-    const email = document.getElementById("email").value;
-    const subject = document.getElementById("subject").value;
-    const message = document.getElementById("message").value;
-
-    const mailtoLink =
-        `mailto:amakkimuhammad@gmail.com` +
-        `?subject=${encodeURIComponent(subject)}` +
-        `&body=${encodeURIComponent(
-            `Name: ${name}\n` +
-            `Email: ${email}\n\n` +
-            `Message:\n${message}`
-        )}`;
-
-    window.location.href = mailtoLink;
-});
